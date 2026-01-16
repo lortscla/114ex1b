@@ -3,12 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tree toggle</title>
+    <title>Forest seasons toggle</title>
     <style>
         body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
+            margin: 0 auto;
             font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
@@ -20,13 +18,13 @@
         
         #container {
             position: relative;
-            display: inline-block;
+            display: block;
         }
         
         #tree {
             display: block;
-            max-height: 90vh;
-            max-width: 90vw;
+            max-height: 100vh;
+            max-width: 100vw;
         }
         
         #canvas {
@@ -47,143 +45,147 @@
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: background-color 0.3s ease;
+            transition: background-color 0.2s ease;
         }
         
         #toggleButton:hover {
-            background-color: #45a049;
+            background-color: #a27764;
         }
     </style>
+
 </head>
+
 <body>
+
     <button id="toggleButton">Switch to Autumn</button>
+
     <div id="container">
         <img id="tree" src="forest.webp" alt="Tree">
-        <canvas id="canvas"></canvas>
+        <canvas id="canvas">
+            <!-- a canvas tag creates a transparent canvas for js animations etc-->
+        </canvas>
     </div>
     
+
     <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const button = document.getElementById('toggleButton');
-        const treeImg = document.getElementById('tree');
+        const canvas = document.getElementById('canvas'); // makes the canvas a constant //
+        const ctx = canvas.getContext('2d'); // allows 2d drawing within the canvas? and makes it a constant //
+        const button = document.getElementById('toggleButton'); // makes the toggle button a constant //
+        const treeImg = document.getElementById('tree'); //makes the forest image a constant //
         
-        let isWinter = true;
-        let particles = [];
-        let treeMask = null;
+        let isWinter = true; // this creates a variable for make the button click to winter //
+        let particles = []; // creates the array? that holes the "particles" whch are the leaves and snow //
+        let treeMask = null; // ??? //
         
-        const snowImg = new Image();
-        snowImg.src = 'snowflake.webp';
+        const snowImg = new Image(); // creates an image object for snowflake img //
+        snowImg.src = 'snowflake.webp';// loads the snowflake image //
         
         const leafImg = new Image();
         leafImg.src = 'leaf.webp';
         
-        function setupCanvas() {
-            canvas.width = treeImg.width;
+        function setupCanvas() { // function to set up the canvas //
+            canvas.width = treeImg.width; // sets canvas width and height to = the forest img //
             canvas.height = treeImg.height;
-            createTreeMask();
+            createTreeMask(); // sets up the canvas img mask ? //
         }
         
-        treeImg.onload = setupCanvas;
-        window.addEventListener('resize', setupCanvas);
+        treeImg.onload = setupCanvas; // after forest/tree img loads, then run the set up canvas (above) //
+        window.addEventListener('resize', setupCanvas); //every time the window/screen is resized, run the canvas set up again (b/c changes canvas size) //
         
-        function createTreeMask() {
-            // No mask needed - we want animation across entire image
-            treeMask = true;
+        function createTreeMask() { // function to set up the forest/tree mask //
+            treeMask = true; // sets the tree/forest mask to true //
         }
         
-        function isInsideTree(x, y) {
-            // Check if coordinates are within canvas bounds
-            return x >= 0 && y >= 0 && x < canvas.width && y < canvas.height;
+        function isInsideTree(x, y) { // defines function that checks if coordinates at within forest/tree img //
+            return x >= 0 && y >= 0 && x < canvas.width && y < canvas.height; // returns true if within, false if not within boundaries //
         }
         
-        class Particle {
-            constructor(isSnow) {
-                this.reset();
-                this.isSnow = isSnow;
-                this.size = Math.random() * 20 + 10;
-                this.speed = Math.random() * 2 + 1;
-                this.sway = Math.random() * 2 - 1;
-                this.swayOffset = Math.random() * Math.PI * 2;
-                this.rotation = Math.random() * 360;
-                this.rotationSpeed = Math.random() * 2 - 1;
+        class Particle { // creates a class for the particles (leaves and snowflakes) //
+            constructor(isSnow) { //constructor f(x) that runs when creating new particle (snow OR leaf) //
+                this.reset(); //resets the initial position of new snow/leaf falling//
+                this.isSnow = isSnow; // sets whether the particle is snow or leaf. here snow is true. not clear on this yet //
+                this.size = Math.random() * 60 + 10; // sets random size of particle between the two numbers //
+                this.speed = Math.random() * 3 + .5; // sets random falling speed btwn two numbers (pixels per frame) //
+                this.sway = Math.random() * 2.5 - 1; // sets random horiz. sway btwn -1 and 1? (units?) //
+                this.swayOffset = Math.random() * Math.PI * 2; //sets teh random swaying of the particles using sine wave 0 - 2pi radians //
+                this.rotation = Math.random() * 360; // sets random initial rotation angle btwn 0 and 360 degrees //
+                this.rotationSpeed = Math.random() * 2 - 1; // sets random rotation speed btwn -1 and 1 degrees / frame //
             }
             
-            reset() {
-                let attempts = 0;
-                do {
-                    this.x = Math.random() * canvas.width;
-                    this.y = Math.random() * canvas.height * 0.2;
-                    attempts++;
-                } while (!isInsideTree(this.x, this.y) && attempts < 100);
+            reset() { //resets particles//
+                let attempts = 0; //keeps track/counts of how many attempts to find a valid position//
+                do { // this starts a "do while..." loop //
+                    this.x = Math.random() * canvas.width; // starts particles randomly across horiz. width of canvas //
+                    this.y = Math.random() * canvas.height * 0.01; // starts particles randomly within the top 20 % (if 0.2) of canvas //
+                    attempts++; // increments attempts by 1 each time the loop runs (how is 1 defined here?) //
+                } while (!isInsideTree(this.x, this.y) && attempts < 100); // repeates if outside of forest img AND less than 100 attempts //
                 
-                if (attempts >= 100) {
-                    this.x = canvas.width / 2;
-                    this.y = 0;
+                if (attempts >= 100) { // if 100 attempts reached without finding valid position //
+                    this.x = canvas.width / 2; // then default to horiz. center of canvas //
+                    this.y = 0; // and also to the top of canvas //
                 }
             }
             
-            update() {
-                this.y += this.speed;
+            update() { // this updates the particle position each frame, and uses defined properties below for behavior of particlel //
+                this.y += this.speed;  //moves particle down by defined speed, along with other properties definfed above under class particle//
                 this.x += Math.sin(this.y * 0.01 + this.swayOffset) * this.sway;
                 this.rotation += this.rotationSpeed;
                 
-                if (this.y > canvas.height || !isInsideTree(this.x, this.y + this.size/2)) {
-                    this.reset();
+                if (this.y > canvas.height || !isInsideTree(this.x, this.y + this.size/2)) { // checks whether particles is within forest img //
+                    this.reset(); //and if it's outside of forest img, reset particle at top//
                 }
             }
             
-            draw() {
-                if (!isInsideTree(this.x, this.y)) return;
+            draw() { //this defines method to draw particles in canvas//
+                if (!isInsideTree(this.x, this.y)) return; //exit function if particle is outside of forest img//
                 
-                ctx.save();
-                ctx.translate(this.x, this.y);
-                ctx.rotate(this.rotation * Math.PI / 180);
-                const img = this.isSnow ? snowImg : leafImg;
-                ctx.drawImage(img, -this.size/2, -this.size/2, this.size, this.size);
-                ctx.restore();
+                ctx.save(); // saves the current state of the canvas ?? //
+                ctx.translate(this.x, this.y); // moves the canvas origin to the particle's position? //
+                ctx.rotate(this.rotation * Math.PI / 180); // rotates the canvas based on rotation angle defined in class particle //
+                const img = this.isSnow ? snowImg : leafImg; // selects snowflake img if isSnow=true (if fasle, then leaf img)//
+                ctx.drawImage(img, -this.size/2, -this.size/2, this.size, this.size); //draws the img centered on the particle position with the particle's size//
+                ctx.restore(); //then restores the canvas's state (refreshes rotate, translate)//
+            } //so, each particle has its own canvas, and the canvas rotates, not the img?//
+        }
+        
+        function createParticles(isSnow) { // function to create particles based on whether it's snow or leaves //
+            particles = []; //clears particles array//
+            for (let i = 0; i < 50; i++) { //starts loop that spits out 50 particles within each viewing frame?//
+                particles.push(new Particle(isSnow)); //creates new particle and adds it to the particles arrray//
             }
         }
         
-        function createParticles(isSnow) {
-            particles = [];
-            for (let i = 0; i < 50; i++) {
-                particles.push(new Particle(isSnow));
-            }
-        }
-        
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        function animate() { //defines animation function that runs each frame//
+            ctx.clearRect(0, 0, canvas.width, canvas.height); //clears the entire canvas (erases previous frame) //
             
-            particles.forEach(particle => {
-                particle.update();
-                particle.draw();
+            particles.forEach(particle => { //loops through each particle in the particles array//
+                particle.update(); //updates particle position and rotation//
+                particle.draw(); //draws particle on canvas//
             });
             
-            requestAnimationFrame(animate);
+            requestAnimationFrame(animate); //creates animation loop (tells browser to run animation function again for next frame) //
         }
         
-        button.addEventListener('click', () => {
-            isWinter = !isWinter;
+        button.addEventListener('click', () => { //defnes click event to listen to the button, runs the arrow function //
+            isWinter = !isWinter; // reverses it? false=true, true=false???)//
             
-            if (isWinter) {
-                button.textContent = 'Switch to Autumn';
-                createParticles(true);
-            } else {
-                button.textContent = 'Switch to Winter';
-                createParticles(false);
+            if (isWinter) { // if in winter mode....//
+                button.textContent = 'Switch to Autumn'; //button text//
+                createParticles(true); // runs the createparticles function above (makes 50 particles) //
+            } else { //if not in winter mode....//
+                button.textContent = 'Switch to Winter'; //button text//
+                createParticles(false); //don't make snow, make leaf particles//
             }
         });
         
-        if (treeImg.complete) {
-            setupCanvas();
+        if (treeImg.complete) { // if forest img is loaded then....//
+            setupCanvas(); //start running canvas set up (why is this at the bottom?)//
         }
         
-        setTimeout(() => {
-            createParticles(true);
-            animate();
-        }, 100);
+        setTimeout(() => { //sets wait time before running function//
+            createParticles(true); //creates initial snow particles//
+            animate(); //sets the animation loop//
+        }, 100); // closes the timeout at 100 millisecond wait //
     </script>
 </body>
 </html>
