@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tree toggle</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #66748e;
+        }
+        
+        #container {
+            position: relative;
+            display: inline-block;
+        }
+        
+        #tree {
+            display: block;
+            max-height: 90vh;
+            max-width: 90vw;
+        }
+        
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+        
+        #toggleButton {
+            position: absolute;
+            top: 30px;
+            z-index: 3;
+            padding: 15px 30px;
+            font-size: 18px;
+            background-color: #262446;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: background-color 0.3s ease;
+        }
+        
+        #toggleButton:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <button id="toggleButton">Switch to Autumn</button>
+    <div id="container">
+        <img id="tree" src="forest.webp" alt="Tree">
+        <canvas id="canvas"></canvas>
+    </div>
+    
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const button = document.getElementById('toggleButton');
+        const treeImg = document.getElementById('tree');
+        
+        let isWinter = true;
+        let particles = [];
+        let treeMask = null;
+        
+        const snowImg = new Image();
+        snowImg.src = 'snowflake.webp';
+        
+        const leafImg = new Image();
+        leafImg.src = 'leaf.webp';
+        
+        function setupCanvas() {
+            canvas.width = treeImg.width;
+            canvas.height = treeImg.height;
+            createTreeMask();
+        }
+        
+        treeImg.onload = setupCanvas;
+        window.addEventListener('resize', setupCanvas);
+        
+        function createTreeMask() {
+            // No mask needed - we want animation across entire image
+            treeMask = true;
+        }
+        
+        function isInsideTree(x, y) {
+            // Check if coordinates are within canvas bounds
+            return x >= 0 && y >= 0 && x < canvas.width && y < canvas.height;
+        }
+        
+        class Particle {
+            constructor(isSnow) {
+                this.reset();
+                this.isSnow = isSnow;
+                this.size = Math.random() * 20 + 10;
+                this.speed = Math.random() * 2 + 1;
+                this.sway = Math.random() * 2 - 1;
+                this.swayOffset = Math.random() * Math.PI * 2;
+                this.rotation = Math.random() * 360;
+                this.rotationSpeed = Math.random() * 2 - 1;
+            }
+            
+            reset() {
+                let attempts = 0;
+                do {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height * 0.2;
+                    attempts++;
+                } while (!isInsideTree(this.x, this.y) && attempts < 100);
+                
+                if (attempts >= 100) {
+                    this.x = canvas.width / 2;
+                    this.y = 0;
+                }
+            }
+            
+            update() {
+                this.y += this.speed;
+                this.x += Math.sin(this.y * 0.01 + this.swayOffset) * this.sway;
+                this.rotation += this.rotationSpeed;
+                
+                if (this.y > canvas.height || !isInsideTree(this.x, this.y + this.size/2)) {
+                    this.reset();
+                }
+            }
+            
+            draw() {
+                if (!isInsideTree(this.x, this.y)) return;
+                
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation * Math.PI / 180);
+                const img = this.isSnow ? snowImg : leafImg;
+                ctx.drawImage(img, -this.size/2, -this.size/2, this.size, this.size);
+                ctx.restore();
+            }
+        }
+        
+        function createParticles(isSnow) {
+            particles = [];
+            for (let i = 0; i < 50; i++) {
+                particles.push(new Particle(isSnow));
+            }
+        }
+        
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+            
+            requestAnimationFrame(animate);
+        }
+        
+        button.addEventListener('click', () => {
+            isWinter = !isWinter;
+            
+            if (isWinter) {
+                button.textContent = 'Switch to Autumn';
+                createParticles(true);
+            } else {
+                button.textContent = 'Switch to Winter';
+                createParticles(false);
+            }
+        });
+        
+        if (treeImg.complete) {
+            setupCanvas();
+        }
+        
+        setTimeout(() => {
+            createParticles(true);
+            animate();
+        }, 100);
+    </script>
+</body>
+</html>
