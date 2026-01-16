@@ -182,7 +182,7 @@
             setupCanvas(); //start running canvas set up (why is this at the bottom?)//
         }
         
-        setTimeout(() => { //sets wait time before running function//
+        setTimeout(() => { //sets wait time before running function - this is at bottom prob b/c it's the time between snow flakes appearing at time, one after the other (running a new loop)?//
             createParticles(true); //creates initial snow particles//
             animate(); //sets the animation loop//
         }, 100); // closes the timeout at 100 millisecond wait //
